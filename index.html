@@ -499,31 +499,25 @@ body {
                 <div class="form-group">
                     <label class="form-label" for="taxBracket">所得稅級距</label>
                     <select id="taxBracket" class="form-select">
-                        <option value="0.05">5% (59萬以下)</option>
-                        <option value="0.12">12% (133萬以下)</option>
-                        <option value="0.20">20% (266萬以下)</option>
-                        <option value="0.30">30% (498萬以下)</option>
+                        <option value="0.05">5% (基本稅率)</option>
+                        <option value="0.12">12% (中等收入)</option>
+                        <option value="0.20">20% (較高收入)</option>
+                        <option value="0.30">30% (高收入)</option>
                     </select>
                 </div>
 
                 <div class="form-group">
-                    <label class="form-label">社會住宅補助（僅適用於社會住宅）</label>
-                    <div class="subsidy-checkboxes">
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="renovationSubsidy">
-                            <label for="renovationSubsidy">修繕補助（最高15,000元/年）</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="insuranceSubsidy">
-                            <label for="insuranceSubsidy">居家安全險（3,500元/年）</label>
-                        </div>
-                        <div class="checkbox-item">
-                            <input type="checkbox" id="notarizationSubsidy">
-                            <label for="notarizationSubsidy">公證費補助（3,000元/年）</label>
-                        </div>
-                    </div>
-                    <div class="subsidy-note">※ 這些補助僅適用於「社會住宅包租代管」方案</div>
-                </div>
+    <label class="form-label" for="socialHousingSubsidy">
+        社會住宅補助（僅適用於社會住宅）
+    </label>
+    <div class="checkbox-item">
+        <input type="checkbox" id="socialHousingSubsidy">
+        <label for="socialHousingSubsidy">是否享受社會住宅補助</label>
+    </div>
+    <div class="subsidy-note" id="subsidyDescription" style="display:none">
+        包含：修繕補助(最高)15,000元/年、居家安全險3,500元/年、公證費補助3,000元/年
+    </div>
+</div>
             </div>
         </div>
 
@@ -545,20 +539,26 @@ body {
 
     <script>
         // Get DOM elements
-        const monthlyRentInput = document.getElementById('monthlyRent');
-        const taxBracketSelect = document.getElementById('taxBracket');
-        const renovationSubsidyCheckbox = document.getElementById('renovationSubsidy');
-        const insuranceSubsidyCheckbox = document.getElementById('insuranceSubsidy');
-        const notarizationSubsidyCheckbox = document.getElementById('notarizationSubsidy');
-        const resultsContainer = document.getElementById('results');
+const monthlyRentInput = document.getElementById('monthlyRent');
+const taxBracketSelect = document.getElementById('taxBracket');
+const socialHousingSubsidyCheckbox = document.getElementById('socialHousingSubsidy');
+const subsidyDescription = document.getElementById('subsidyDescription');
+const resultsContainer = document.getElementById('results');
 
-        // Format number with thousand separator
-        function formatNumber(num) {
-            return Math.round(num).toLocaleString('zh-TW');
-        }
+// Tooltip for subsidy description (show on hover/focus/click)
+socialHousingSubsidyCheckbox.addEventListener('focus', () => { subsidyDescription.style.display = 'block'; });
+socialHousingSubsidyCheckbox.addEventListener('blur', () => { subsidyDescription.style.display = socialHousingSubsidyCheckbox.checked ? 'block' : 'none'; });
+socialHousingSubsidyCheckbox.addEventListener('mouseenter', () => { subsidyDescription.style.display = 'block'; });
+socialHousingSubsidyCheckbox.addEventListener('mouseleave', () => { subsidyDescription.style.display = socialHousingSubsidyCheckbox.checked ? 'block' : 'none'; });
+socialHousingSubsidyCheckbox.addEventListener('change', () => { subsidyDescription.style.display = socialHousingSubsidyCheckbox.checked ? 'block' : 'none'; });
 
-        // Calculate taxes for all categories
-        function calculateTaxes() {
+// Format number with thousand separator
+function formatNumber(num) {
+    return Math.round(num).toLocaleString('zh-TW');
+}
+
+// Calculate taxes for all categories
+function calculateTaxes() {
             const monthlyRent = parseFloat(monthlyRentInput.value) || 0;
             const taxRate = parseFloat(taxBracketSelect.value);
 
@@ -632,40 +632,45 @@ body {
             };
 
             // Category 4: Social Housing (社會住宅)
-            const monthlyTaxFree4 = 15000;
-            const annualTaxFree4 = monthlyTaxFree4 * 12;
-            const taxableIncome4 = Math.max(0, annualRent - annualTaxFree4);
-            const necessaryExpense4 = taxableIncome4 * 0.6;
-            const incomeTax4 = (taxableIncome4 - necessaryExpense4) * taxRate;
-            const propertyLandTax4 = annualRent * 0.012;
-            
-            // Calculate subsidies
-            let totalSubsidies = 0;
-            if (renovationSubsidyCheckbox.checked) totalSubsidies += 15000;
-            if (insuranceSubsidyCheckbox.checked) totalSubsidies += 3500;
-            if (notarizationSubsidyCheckbox.checked) totalSubsidies += 3000;
-            
-            const category4 = {
-                id: 4,
-                name: '社會住宅',
-                description: '政府委託、最高稅優',
-                risk: 'best',
-                badge: '最划算',
-                annualRent: annualRent,
-                taxFree: annualTaxFree4,
-                taxableIncome: taxableIncome4,
-                necessaryExpense: necessaryExpense4,
-                incomeTax: incomeTax4,
-                propertyLandTax: propertyLandTax4,
-                propertyTaxRate: '1.2% (自用住宅稅率)',
-                subsidies: totalSubsidies,
-                netIncome: annualRent - incomeTax4 - propertyLandTax4 + totalSubsidies
-            };
+const monthlyTaxFree4 = 15000;
+const annualTaxFree4 = monthlyTaxFree4 * 12;
+const taxableIncome4 = Math.max(0, annualRent - annualTaxFree4);
+const necessaryExpense4 = taxableIncome4 * 0.6;
+const incomeTax4 = (taxableIncome4 - necessaryExpense4) * taxRate;
+const propertyLandTax4 = annualRent * 0.012;
 
-            // Render all categories
-            const categories = [category1, category2, category3, category4];
-            renderCategories(categories);
-        }
+// 社會住宅補助（僅適用於社會住宅，且為單選勾勾，一次性全包）
+const socialHousingTotalSubsidy = 21500;
+const socialHousingSubsidyDesc = '21,500元（包含修繕、保險、公證費）';
+let displayTotalSubsidy = 0;
+let displaySubsidyDesc = '';
+if (socialHousingSubsidyCheckbox.checked) {
+    displayTotalSubsidy = socialHousingTotalSubsidy;
+    displaySubsidyDesc = socialHousingSubsidyDesc;
+}
+
+const category4 = {
+    id: 4,
+    name: '社會住宅',
+    description: '政府委託、最高稅優',
+    risk: 'best',
+    badge: '最划算',
+    annualRent: annualRent,
+    taxFree: annualTaxFree4,
+    taxableIncome: taxableIncome4,
+    necessaryExpense: necessaryExpense4,
+    incomeTax: incomeTax4,
+    propertyLandTax: propertyLandTax4,
+    propertyTaxRate: '1.2% (自用住宅稅率)',
+    subsidies: displayTotalSubsidy,
+    subsidiesDesc: displaySubsidyDesc,
+    netIncome: annualRent - incomeTax4 - propertyLandTax4 + displayTotalSubsidy
+};
+
+// Render all categories
+const categories = [category1, category2, category3, category4];
+renderCategories(categories);
+}
 
         function renderCategories(categories) {
             const comparisonHTML = categories.map(cat => {
@@ -714,7 +719,7 @@ body {
                                     <span class="breakdown-value negative">NT$ ${formatNumber(penaltyTax)}</span>
                                 </div>
                                 <div class="breakdown-item">
-                                    <span class="breakdown-label">罰款（3倍）</span>
+                                    <span class="breakdown-label">罰款（最高3倍）</span>
                                     <span class="breakdown-value negative">NT$ ${formatNumber(penaltyFine)}</span>
                                 </div>
                                 <div class="breakdown-item">
@@ -784,14 +789,14 @@ body {
                     `;
                 }
 
-                if (cat.id === 4 && cat.subsidies > 0) {
-                    html += `
-                        <div class="breakdown-item">
-                            <span class="breakdown-label">政府補助</span>
-                            <span class="breakdown-value positive">NT$ ${formatNumber(cat.subsidies)}</span>
-                        </div>
-                    `;
-                }
+                if (cat.id === 4) {
+    html += `
+        <div class="breakdown-item">
+            <span class="breakdown-label">政府補助(最高)</span>
+            <span class="breakdown-value positive">${cat.subsidies > 0 ? cat.subsidiesDesc : '0元'}</span>
+        </div>
+    `;
+}
 
                 html += `
                     </div>
@@ -810,13 +815,11 @@ body {
 
         // Event listeners for real-time calculation
         monthlyRentInput.addEventListener('input', calculateTaxes);
-        taxBracketSelect.addEventListener('change', calculateTaxes);
-        renovationSubsidyCheckbox.addEventListener('change', calculateTaxes);
-        insuranceSubsidyCheckbox.addEventListener('change', calculateTaxes);
-        notarizationSubsidyCheckbox.addEventListener('change', calculateTaxes);
+taxBracketSelect.addEventListener('change', calculateTaxes);
+socialHousingSubsidyCheckbox.addEventListener('change', calculateTaxes);
 
-        // Initial calculation
-        calculateTaxes();
+// Initial calculation
+calculateTaxes();
     </script>
 </body>
 </html>
